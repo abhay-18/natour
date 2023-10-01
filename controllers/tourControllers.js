@@ -1,5 +1,6 @@
 // const fs = require('fs');
 const Tour = require('../models/tourModel');
+const ApiFeatures = require('../utils/apiFeatures');
 
 // exports.checkBody = (req, res, next) => {
 //   if ('name' in req.body && 'price' in req.body) {
@@ -105,53 +106,13 @@ exports.createTour = async (req, res) => {
 // 5. Get all tours---
 exports.getTours = async (req, res) => {
   try {
-    // Build Query----->
-    // Basic filtering---->
-    const queryObj = { ...req.query };
-    const exculdedFields = ['page', 'sort', 'limit', 'fields'];
-    exculdedFields.forEach(el => delete queryObj[el]);
-
-    // Advance filtering--->
-    let queryStr = JSON.stringify(queryObj);
-    queryStr = queryStr.replace(/\b(gte|ft|lte|lt)\b/g, match => `$${match}`);
-    // console.log(queryStr);
-
-    let query = Tour.find(
-      JSON.parse(queryStr)
-    ); /* Find method returns the query, hence it is advisable to get the query first and then use the await keyword while executing the query.*/
-
-    // Sorting--->
-    if ('sort' in req.query) {
-      const sortBy = req.query.sort.split(',').join(' ');
-      // console.log(sortBy);
-      query = query.sort(sortBy);
-    } else {
-      query = query.sort('createdAt');
-    }
-    // console.log(req.query);
-    // Limiting fields --->
-    if ('fields' in req.query) {
-      const fields = req.query.fields.split(',').join(' ');
-      console.log(fields);
-      query = query.select(fields);
-    } else {
-      query = query.select('-__v');
-    }
-
-    // Pagination--->
-    const page = req.query.page * 1 || 1;
-    const limit = req.query.limit * 1 || 5;
-    const skip = (page - 1) * limit;
-
-    query = query.skip(skip).limit(limit);
-
-    const totalTours = await Tour.countDocuments();
-
-    if (skip >= totalTours) {
-      throw new Error('Page does not exist.');
-    }
+    const features = new ApiFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limit()
+      .pagination();
     // Execute query--->
-    const tours = await query;
+    const tours = await features.query;
 
     // Send Response
     res.status(200).json({
@@ -165,6 +126,99 @@ exports.getTours = async (req, res) => {
     res.status(400).json({
       status: 'failure',
       message: 'error'
+    });
+  }
+};
+
+exports.getTourStats = async (req, res) => {
+  try {
+    const stats = await Tour.aggregate([
+      {
+        $match: {
+          ratingsAverage: { $gte: 4.5 }
+        }
+      },
+      {
+        $group: {
+          _id: { $toUpper: '$difficulty' },
+          averageRating: { $avg: '$ratingsAverage' },
+          averagePrice: { $avg: '$price' },
+          minprice: { $min: '$price' },
+          maxprice: { $max: '$price' },
+          totalRatings: { $sum: '$ratingsQuantity' },
+          numTours: { $sum: '$numTours' }
+        }
+      },
+      {
+        $sort: {
+          averageRating: 1
+        }
+      },
+      {
+        $match: {
+          _id: { $ne: 'EASY' }
+        }
+      }
+    ]);
+
+    res.status(400).json({
+      status: 'success',
+      stats: stats
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'failure',
+      message: err
+    });
+  }
+};
+
+exports.bussiestTours = async (req, res, next) => {
+  const year = req.params.year * 1;
+  try {
+    const plan = await Tour.aggregate([
+      {
+        $unwind: '$startDates'
+      },
+      {
+        $match: {
+          startDates: {
+            $gte: new Date(`${year}-01-01`),
+            $lte: new Date(`${year}-12-31`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: '$startDates' },
+          numTourStarts: { $sum: 1 },
+          tours: { $push: '$name' }
+        }
+      },
+      {
+        $addFields: { month: '$_id' }
+      },
+      {
+        $project: { _id: 0 }
+      },
+      {
+        $sort: { numTourStarts: -1 }
+      },
+      {
+        $limit: 12
+      }
+    ]);
+    res.status(200).json({
+      status: 'success',
+      results: plan.length,
+      data: {
+        plan
+      }
+    });
+  } catch (err) {
+    res.status(404).json({
+      status: 'failure',
+      error: err
     });
   }
 };
