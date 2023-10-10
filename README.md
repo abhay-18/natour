@@ -17,35 +17,26 @@
 ![CSS](https://img.shields.io/badge/CSS-0d47a1.svg?style=for-the-badge&logo=css&logoColor=white)
 &nbsp;&nbsp;
 
-<hr />
-
 ### A ficitional Tour booking website made with
 
 > -   NodeJS and ExpressJS
 > -   MongoDB and Mongoose
-
-
-### API BASE URL
-- `/api/v1`
-
-### API Resources URL
-- `/tours`
-- `/users`
-
-
-
+> -   HTML CSS and JavaScript
 
 ### Features of the Web App
 
+> -   It is a Server Side Rendered Website having EJS as the view engine
 > -   Built the REST (REpresentational State Transfer) API with Node, Express and Mongoose
+> -   The WebApp also implements MVC (Model-View-Controller) architecture
 > -   Functionality of User Signup, login, reset account password using email is implemented
+> -   User can make payment and book tour, see all tours, give reviews on a tour.
 > -   Admin can delete, create and get all users, delete, create and get all tours, update and delete reviews
+> -   Users can book a tour, update their profile, login , signup
 
 ### Some important modules used for Security purpose
 
 ```javascript
 const rateLimit = require('express-rate-limit');
-const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
@@ -54,8 +45,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 ```
 
-> -   Rate Limit is the module used for limiting the no. of requests made by a client
-> -   Helmet helps us secure our Express.js apps by securing various HTTP headers.
+<!--  const helmet = require('helmet'); -->
+
+> -   Rate Limit is the module used for limiting the no. of requests made by a client to the server.
 > -   Mongo Sanitize sanitizes mongodb queries against NOSQL query injections.
 > -   XSS modules help us to prevent cross site scripting attacks.
 > -   HPP module helps us to prevent attacks against HTTP parameter pollution..
