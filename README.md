@@ -25,7 +25,6 @@
 
 ### Features of the Web App
 
-> -   It is a Server Side Rendered Website having EJS as the view engine
 > -   Built the REST (REpresentational State Transfer) API with Node, Express and Mongoose
 > -   The WebApp also implements MVC (Model-View-Controller) architecture
 > -   Functionality of User Signup, login, reset account password using email is implemented
